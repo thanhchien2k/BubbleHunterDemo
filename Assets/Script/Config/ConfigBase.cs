@@ -16,15 +16,11 @@ public class ConfigBase<T> : ScriptableObject where T : ScriptableObject
 #if UNITY_EDITOR
             if (instance == null)
             {
-                string configPath = string.Format("{0}/{1}", "Resources", "Config/" + typeof(T).Name);
+                string configPath = string.Format("{0}/{1}", "Resources", "Config");
                 if (!System.IO.Directory.Exists(configPath))
                     System.IO.Directory.CreateDirectory(configPath);
 
                 instance = CreateAsset(configPath, typeof(T).Name.ToString());
-            }
-            else
-            {
-                SaveAsset(instance);
             }
 #endif
             return instance;

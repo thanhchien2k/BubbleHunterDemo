@@ -12,6 +12,8 @@ public class MapHandle : MonoBehaviour
     [SerializeField] Tilemap[] maps;
     [SerializeField] string fileName = "tilemapsConfig";
     [SerializeField] GameObject prefabs;
+    [SerializeField] Tilemap checkTile;
+    public Grid GridParent;
 
     private void Start()
     {
@@ -65,19 +67,10 @@ public class MapHandle : MonoBehaviour
             {
                 foreach (var tile in mapData.Tiles)
                 {
-
-                    //if (guidToTileBase.ContainsKey(tile.guidForBuildable))
-                    //{
-                    //    map.SetTile(tile.position, guidToTileBase[tile.guidForBuildable]);
-                    //}
-                    //else
-                    //{
-                    //    Debug.LogError("Refernce " + tile.guidForBuildable + " could not be found.");
-                    //}
-                    //map.SetTile(tile.Position, tile.TileBase);
                     Vector3 worldPosition = map.CellToWorld(tile.Position);
-                    GameObject instantiatedObject = Instantiate(prefabs, worldPosition, Quaternion.identity);
-                    instantiatedObject.transform.SetParent(maps[0].transform);
+                    Bubble bubble = Instantiate(GameConfig.Bubble, worldPosition, Quaternion.identity);
+                    bubble.transform.SetParent(maps[0].transform);
+                    bubble.EnabbleCircleCollider();
                 }
             }
         }
@@ -89,7 +82,6 @@ public class MapHandle : MonoBehaviour
 
         BoundsInt boundsInt = tile.cellBounds;
 
-        Debug.Log(boundsInt.xMin + " " + boundsInt.xMax + " " + boundsInt.yMin + " " + boundsInt.yMax);
         for (int x = boundsInt.xMin; x < boundsInt.xMax; x++)
         {
             for (int y = boundsInt.yMin; y < boundsInt.yMax; y++)
@@ -99,7 +91,6 @@ public class MapHandle : MonoBehaviour
 
                 if (tileBase != null)
                 {
-                    Debug.Log("!= null");
                     TileInfo infos = new TileInfo(tileBase, pos);
                     curData.Tiles.Add(infos);
                 }
@@ -111,36 +102,29 @@ public class MapHandle : MonoBehaviour
 
     public void LoadTilemap(Tilemap tilemap)
     {
-        TilemapData data = GetTileMapData(tilemap);
+        if (tilemap == null) return;
+        Tilemap create = Instantiate(tilemap, GridParent.transform);
+        TilemapData data = GetTileMapData(create);
+
+        create.ClearAllTiles();
 
         if (data.Tiles != null && data.Tiles.Count > 0)
         {
             foreach (var tile in data.Tiles)
             {
-                Vector3 worldPosition = tilemap.CellToWorld(tile.Position);
-                GameObject instantiatedObject = Instantiate(prefabs, worldPosition, Quaternion.identity);
-                instantiatedObject.transform.SetParent(maps[0].transform);
+                Vector3 worldPosition = create.CellToWorld(tile.Position);
+                Bubble bubble = Instantiate(GameConfig.Bubble, worldPosition, Quaternion.identity);
+                bubble.transform.SetParent(create.transform);
+                bubble.EnabbleCircleCollider();
+                GameManager.Instance.bubblesTransform.Add(bubble);
             }
         }
     }
-}
 
-[Serializable]
-public class TilemapData
-{
-    public string Key;
-    public List<TileInfo> Tiles = new();
-}
-
-[Serializable]
-public class TileInfo
-{
-    public TileBase TileBase;
-    public Vector3Int Position;
-
-    public TileInfo(TileBase tile, Vector3Int position)
+    [Button("Load Tilemap")]
+    public void TestLoad()
     {
-        this.TileBase = tile;
-        this.Position = position;
+        LoadTilemap(checkTile);
     }
 }
+
