@@ -30,11 +30,13 @@ public class BubbleInfo
 {
     public BubbleType Type;
     public BubbleColor Color;
+    public Sprite Sprite;
 
-    public BubbleInfo(BubbleType type, BubbleColor color)
+    public BubbleInfo(BubbleType type, BubbleColor color, Sprite sprite)
     {
         this.Type = type;
         this.Color = color;
+        this.Sprite = sprite;
     }
 }
 
@@ -45,7 +47,6 @@ public class TilemapData
     public List<TileInfo> Tiles = new();
 }
 
-[Serializable]
 public class TileInfo
 {
     public TileBase TileBase;

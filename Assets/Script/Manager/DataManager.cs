@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.Tilemaps;
 
 public static class DataManager 
 {
@@ -57,31 +56,31 @@ public static class DataManager
 
     private static void WriteFile(string path, string content)
     {
-        FileStream newFile = null;
-        string newPath;
-        if (File.Exists(path))
-        {
-            int index = 0;
-            newPath = path + index;
+        //FileStream newFile = null;
+        //string newPath;
+        //if (File.Exists(path))
+        //{
+        //    int index = 0;
+        //    newPath = path + index;
 
-            while(index <= 10)
-            {
-                if (!File.Exists(path)) 
-                {
-                    newFile = new FileStream(newPath, FileMode.Create);
-                    break;
-                }
-                index++;
-            }
-        }
+        //    while(index <= 10)
+        //    {
+        //        if (!File.Exists(path)) 
+        //        {
+        //            newFile = new FileStream(newPath, FileMode.Create);
+        //            break;
+        //        }
+        //        index++;
+        //    }
+        //}
 
-        if (newFile != null)
-        {
-            using (StreamWriter writer = new StreamWriter(newFile))
-            {
-                writer.Write(File.ReadAllText(path));
-            }
-        }
+        //if (newFile != null)
+        //{
+        //    using (StreamWriter writer = new StreamWriter(newFile))
+        //    {
+        //        writer.Write(File.ReadAllText(path));
+        //    }
+        //}
 
         FileStream fileStream = new FileStream(path, FileMode.Create);
 

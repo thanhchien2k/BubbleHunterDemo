@@ -1,7 +1,8 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
+using Random = UnityEngine.Random;
 
-public class Shooter : MonoBehaviour
+public class Shooter : Singleton<Shooter>
 {
     [SerializeField] private LineController lineController;
     [SerializeField] private Transform currentTransform;
@@ -15,21 +16,22 @@ public class Shooter : MonoBehaviour
     private void Start()
     {
         curHitPoint = currentTransform.position;
+        SpawnBubble();
     }
     void Update()
     {
-       ProcessInput();
+        ProcessInput();
     }
 
     private void ProcessInput()
     {
-        if (Input.GetMouseButtonDown(0) && !EventSystem.current.IsPointerOverGameObject() )
+        if (Input.GetMouseButtonDown(0) && !EventSystem.current.IsPointerOverGameObject() && curBubble != null)
         {
             lineController.gameObject.SetActive(true);
             lineController.SetUpLine(currentTransform);
         }
 
-        if (Input.GetMouseButton(0) && lineController != null)
+        if (Input.GetMouseButton(0) && lineController != null && lineController.isActiveAndEnabled)
         {
             var lookDirection = Camera.main.ScreenToWorldPoint(Input.mousePosition) - transform.position;
             var lookAngle = Mathf.Atan2(lookDirection.y, lookDirection.x) * Mathf.Rad2Deg;
@@ -45,7 +47,7 @@ public class Shooter : MonoBehaviour
             if (hit.collider != null)
             {
                 //if (curHitPoint == hit.point) return;
-               
+
                 curHitPoint = hit.point;
                 lineController.UpdatePoint(hit.point);
 
@@ -74,6 +76,13 @@ public class Shooter : MonoBehaviour
     {
         curBubble.ShootBubble(_shootingForce, _lookAngle);
         _lookAngle = 90f;
-        curBubble = null;
+    }
+
+    public void SpawnBubble()
+    {
+        curBubble = Instantiate(GameConfig.Bubble, currentTransform);
+        int maxIndex = GameConfig.BubbleInfos.Count;
+
+        curBubble.SetupBubble(GameConfig.BubbleInfos[Random.Range(0, maxIndex)], true);
     }
 }

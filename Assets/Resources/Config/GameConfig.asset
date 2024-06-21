@@ -13,3 +13,16 @@ MonoBehaviour:
   m_Name: GameConfig
   m_EditorClassIdentifier: 
   bubble: {fileID: 7514001694145166954, guid: b0227c8c9095604498c8c0a9fdb45f61, type: 3}
+  bubbleInfos:
+  - Type: 0
+    Color: 0
+    Sprite: {fileID: 21300000, guid: cc0c5ecb8b4498244b264d3ecfe923d5, type: 3}
+  - Type: 0
+    Color: 1
+    Sprite: {fileID: 21300000, guid: 6b4df4bd11a19cf4d80ecef55f82f284, type: 3}
+  - Type: 0
+    Color: 2
+    Sprite: {fileID: 21300000, guid: 0ad4a3953f4b7d94dafa60b84008eba0, type: 3}
+  - Type: 0
+    Color: 3
+    Sprite: {fileID: 21300000, guid: d8d3da9b13575964181e381bea4cde7d, type: 3}
