@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using UnityEngine.Tilemaps;
 using UnityEngine;
-using JetBrains.Annotations;
 public class DataConfig
 {
 
@@ -12,7 +11,10 @@ public class DataConfig
 public enum BubbleType
 {
     Normal = 0,
-
+    Gem = 1,
+    Spark = 2,
+    Hole = 3,
+    Jar = 4,
 }
 
 
@@ -31,14 +33,15 @@ public class BubbleInfo
     public BubbleType Type;
     public BubbleColor Color;
     public Sprite Sprite;
-
-    public BubbleInfo(BubbleType type, BubbleColor color, Sprite sprite)
-    {
-        this.Type = type;
-        this.Color = color;
-        this.Sprite = sprite;
-    }
 }
+
+[Serializable]
+public struct SpriteConfig
+{
+    public string Name;
+    public Sprite Sprite;
+}
+
 
 [Serializable]
 public class TilemapData
@@ -51,12 +54,12 @@ public class TileInfo
 {
     public TileBase TileBase;
     public Vector3Int Position;
-    public BubbleInfo BubbleInfo;
-    public TileInfo(TileBase tile, Vector3Int position, BubbleInfo bubbleInfo)
+    public string SpriteName;
+    public TileInfo(TileBase tile, Vector3Int position, string spriteName)
     {
         this.TileBase = tile;
         this.Position = position;
-        this.BubbleInfo = bubbleInfo;
+        this.SpriteName = spriteName;
     }
 
     public TileInfo(TileBase tile, Vector3Int position)

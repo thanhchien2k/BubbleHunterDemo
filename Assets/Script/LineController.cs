@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -11,43 +12,11 @@ public class LineController : MonoBehaviour
         lr = GetComponent<LineRenderer>();
     }
 
-    public void SetUpLine(RectTransform startPoint, Gradient gradient)
+    public void UpdatePoint(int index, Vector3 pos)
     {
-        if (lr != null)
-        {
-            lr.positionCount = 2;
-            lr.SetPosition(0, startPoint.position);
-            lr.SetPosition(1, startPoint.position);
-            lr.colorGradient = gradient;
-        }
+        if (lr == null) return;
+        lr.positionCount = index + 1;
+        lr.SetPosition(index, pos);
     }
-
-    public void SetUpLine(Transform startPoint)
-    {
-        if (lr != null)
-        {
-            lr.positionCount = 2;
-            lr.SetPosition(0, startPoint.position);
-            lr.SetPosition(1, startPoint.position);
-        }
-    }
-
-    public void UpdatePoint(Vector3 pos)
-    {
-        lr.positionCount = 2;
-        lr.SetPosition(1, pos);
-    }
-
-    public void UpdateNewPoint(Vector3 pos)
-    {
-        lr.positionCount = 3;
-        lr.SetPosition(2, pos);
-    }
-
-    public void UpdateGradient(Gradient gradient)
-    {
-        lr.colorGradient = gradient;
-    }
-
 
 }

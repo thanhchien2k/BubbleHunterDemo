@@ -101,8 +101,7 @@ public class MapHandle : MonoBehaviour
 
                 if (tileBase != null)
                 {   
-                   
-                    TileInfo infos = new TileInfo(tileBase, pos, infosDictionary[((Tile)tileBase).sprite.name]);
+                    TileInfo infos = new TileInfo(tileBase, pos,((Tile)tileBase).sprite.name);
                     curData.Tiles.Add(infos);
                 }
             }
@@ -129,7 +128,7 @@ public class MapHandle : MonoBehaviour
                 Vector3 worldPosition = map.CellToWorld(tile.Position);
                 Bubble bubble = Instantiate(GameConfig.Bubble, worldPosition, Quaternion.identity);
                 bubble.transform.SetParent(map.transform);
-                bubble.SetupBubble(tile.BubbleInfo);
+                bubble.SetupBubble(infosDictionary[tile.SpriteName]);
             }
         }
     }
@@ -137,11 +136,8 @@ public class MapHandle : MonoBehaviour
     public void SaveDataToFile(TilemapData data)
     {
         List<TilemapData> datas = new List<TilemapData>();
-
-   
             data.Key = "1";
             datas.Add(data);
-        Debug.Log(data.Tiles[0].BubbleInfo.Color);
 
         DataManager.SaveToJSON<TilemapData>(datas, SellectTile.name);
 

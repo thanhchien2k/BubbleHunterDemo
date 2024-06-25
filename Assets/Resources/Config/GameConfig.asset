@@ -16,13 +16,28 @@ MonoBehaviour:
   bubbleInfos:
   - Type: 0
     Color: 0
-    Sprite: {fileID: 21300000, guid: cc0c5ecb8b4498244b264d3ecfe923d5, type: 3}
+    Sprite: {fileID: 21300000, guid: 1759c94ae36447947a01ef53fc89e9d0, type: 3}
   - Type: 0
     Color: 1
-    Sprite: {fileID: 21300000, guid: 6b4df4bd11a19cf4d80ecef55f82f284, type: 3}
+    Sprite: {fileID: 21300000, guid: 76b64d1668558e745a8ae079b5655ffa, type: 3}
   - Type: 0
     Color: 2
-    Sprite: {fileID: 21300000, guid: 0ad4a3953f4b7d94dafa60b84008eba0, type: 3}
+    Sprite: {fileID: 21300000, guid: acfa4d6987c7283428848f27ce575365, type: 3}
   - Type: 0
     Color: 3
-    Sprite: {fileID: 21300000, guid: d8d3da9b13575964181e381bea4cde7d, type: 3}
+    Sprite: {fileID: 21300000, guid: 52ea46944a688874692a96daf00a2ce7, type: 3}
+  - Type: 1
+    Color: 3
+    Sprite: {fileID: 21300000, guid: d6dcf4ffe964c3a45bac868180482387, type: 3}
+  - Type: 1
+    Color: 0
+    Sprite: {fileID: 21300000, guid: 8afb5899aabec1b4495a3e224a93241c, type: 3}
+  - Type: 1
+    Color: 2
+    Sprite: {fileID: 21300000, guid: 2e66b76f903148b4dac2bb7b76fb8edb, type: 3}
+  - Type: 1
+    Color: 1
+    Sprite: {fileID: 21300000, guid: 65ab6f70d150d744389b264c5a199079, type: 3}
+  levelMap:
+  - {fileID: 4362527501814491373, guid: d3466dc3b86d2034b8a8e3209bdc0cfc, type: 3}
+  bubblelifeTime: 2
