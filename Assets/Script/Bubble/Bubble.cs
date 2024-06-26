@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 public class Bubble : MonoBehaviour
 {
@@ -30,7 +31,7 @@ public class Bubble : MonoBehaviour
         circleCollider.enabled = true;
         rb = gameObject.AddComponent<Rigidbody2D>();
         rb.gravityScale = 0f;
-        //rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+        rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
         this.transform.rotation = Quaternion.Euler(0f, 0f, angles - 90f);
         rb.AddForce(this.transform.up * shootingForce, ForceMode2D.Impulse);
     }
@@ -40,8 +41,10 @@ public class Bubble : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Bubble") && rb != null )
         {
+
             if(collision.transform.GetComponent<Bubble>().IsFixed && !IsFixed)
             {
+               //transform.position = GetTargetPos(collision.transform.GetComponent<Bubble>(), this);
                 ConnectToMap(this);
             }
         }
@@ -50,6 +53,13 @@ public class Bubble : MonoBehaviour
             ConnectToMap(this);
         }
     }
+
+    //public Vector3 GetTargetPos(Bubble bubble, Bubble move)
+    //{
+    //    rb.velocity = Vector2.zero;
+    //    Destroy(rb);
+    //    return GameManager.Instance.GetTargetPos(bubble, move);
+    //}
 
     public void ConnectToMap(Bubble bubble)
     {

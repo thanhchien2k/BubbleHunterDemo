@@ -17,22 +17,24 @@ public class Shooter : Singleton<Shooter>
     private Vector2 curHitPoint;
     private Bubble curBubble;
     private Bubble nextBubble;
+    private bool ableShoot = true;
 
-    void Update()
+    private void Update()
     {
         ProcessInput();
     }
 
     private void ProcessInput()
     {
+        if(CameraController.Instance._cameraIsMoving || GameManager.Instance.IsEndGame) return;
 
-        if (Input.GetMouseButtonDown(0) && !EventSystem.current.IsPointerOverGameObject())
+        if (Input.GetMouseButtonDown(0) && !EventSystem.current.IsPointerOverGameObject() && ableShoot)
         {
             lineController.gameObject.SetActive(true);
             lineController.UpdatePoint(0, shootTransform.position);
         }
 
-        if (Input.GetMouseButton(0) && lineController != null)
+        if (Input.GetMouseButton(0) && lineController.gameObject.activeSelf)
         {
             var lookDirection = Camera.main.ScreenToWorldPoint(Input.mousePosition) - transform.position;
             var lookAngle = Mathf.Atan2(lookDirection.y, lookDirection.x) * Mathf.Rad2Deg;
@@ -55,21 +57,19 @@ public class Shooter : Singleton<Shooter>
                 if (hit.collider.CompareTag("Wall"))
                 {
                     Vector2 direct = Vector2.Reflect(lookDirection, hit.normal);
-                    Vector2 pos = direct.normalized + hit.point;
+                    Vector2 pos = direct.normalized / 10 + curHitPoint;
                     hit = Physics2D.Raycast(pos, direct);
 
                     lineController.UpdatePoint(2, hit.point);
-                    
                 }
             }
         }
 
 
 
-        if (Input.GetMouseButtonUp(0) && curBubble != null && lineController.isActiveAndEnabled)
+        if (Input.GetMouseButtonUp(0) && curBubble != null && lineController.gameObject.activeSelf)
         {
             lineController.gameObject.SetActive(false);
-
             if (GameManager.Instance.IsCanPlay)
             {
                 GameManager.Instance.IsCanPlay = false;
@@ -82,26 +82,33 @@ public class Shooter : Singleton<Shooter>
 
     private void Shoot()
     {
-        Debug.Log("shoot");
+        ableShoot = false;
         curBubble.ShootBubble(_shootingForce, _lookAngle);
         _lookAngle = 90f;
     }
 
     public void OnBubbleCollided()
     {
+
+        if (nextBubble == null)
+        {
+            SpawnBubble();
+            GameManager.Instance.IsCanPlay = true;
+            return;
+        }
+
+        ableShoot = true;  
+
         if (GameManager.Instance.ShotsLeft == 0)
         {
             GameManager.Instance.OnEndGame();
         }
 
-        //_ableToShoot = true;
-        //_isSwaping = false;
-
+        
         if (GameManager.Instance.ShotsLeft > 0 && GameManager.Instance.BubblesLeft > 0)
         {
             curBubble = nextBubble;
             curBubble.transform.SetParent(shootTransform);
-
             MoveToTarget(curBubble.transform, shootTransform.position, 0.2f, ()=>
             {
                 if (GameManager.Instance.ShotsLeft > 1 && GameManager.Instance.BubblesLeft > 0)
@@ -113,10 +120,7 @@ public class Shooter : Singleton<Shooter>
             });
 
             nextBubble = null;
-
         }
-
-
     }
 
     public void SpawnBubble()
@@ -167,10 +171,10 @@ public class Shooter : Singleton<Shooter>
 
         if (!colors.Contains(curBubble.color))
         {
-            Debug.Log("chedck");
-            Destroy(curBubble);
+            Destroy(curBubble.gameObject);
             curBubble = CreateNewBubble(colors);
             curBubble.transform.position = shootTransform.position;
+            curBubble.transform.SetParent(shootTransform);
         }
     }
 }

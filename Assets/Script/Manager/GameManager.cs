@@ -8,9 +8,9 @@ public class GameManager : Singleton<GameManager>
 {
     [SerializeField] Transform grid;
     [SerializeField] Shooter shooter;
+    [SerializeField] CameraController cameraController;
 
     Tilemap tilemap;
-    [SerializeField] CameraController cameraController;
     int _minSequenceSize = 3;
     public int ShotsLeft { get; private set; } = 20;
     public int BubblesLeft { get { return bubblesInScene.Count; } }
@@ -24,25 +24,21 @@ public class GameManager : Singleton<GameManager>
     private List<Bubble> bubbleAnim;
     public List<BubbleColor> colorsInScene { get; private set; }
     public bool IsCanPlay { get; set; } = false;
+    public bool IsEndGame { get; set; } = false;
+    public Vector2 cellSize { get; set; }
 
-    private void Start()
+    protected override void Awake()
     {
+        base.Awake();   
+
         bubbleSequence = new List<Bubble>();
         bubbleAnim = new List<Bubble>();
-
         tilemap = Instantiate(GameConfig.LevelMap[0], grid);
-        _neighborDetectionRange = GameConfig.Bubble.circleCollider.radius * 1.3f;
+        _neighborDetectionRange = GameConfig.Bubble.circleCollider.radius * 1.2f;
+        cellSize = tilemap.cellSize;
+        if (cameraController == null) cameraController = CameraController.Instance;
         AddBubleToList();
         UpdateScene();
-        MoveCamera();
-        
-    }
-    public void MoveCamera()
-    {
-        IsCanPlay = false;
-        Vector2 cellSize = tilemap.cellSize;
-        Vector2 targetPos = new Vector2(0, GetLowestBubblePos().y);
-        cameraController.StartMoveCamera(targetPos, 1.5f, OnEndStartMoveCamera);
     }
 
     public void AddBubleToList()
@@ -52,7 +48,13 @@ public class GameManager : Singleton<GameManager>
 
         highestPos = GetHighestBubblePos();
     }
+    public void AddBubble(Bubble currentBubble)
+    {
+        bubblesInScene.Add(currentBubble);
+        currentBubble.transform.SetParent(tilemap.transform);
+    }
 
+    #region Process Function
     public void ProcessTurn(Bubble currentBubble)
     {
         bubbleSequence.Clear();
@@ -68,12 +70,6 @@ public class GameManager : Singleton<GameManager>
         }
 
         StartCoroutine(ProcessBubbles());
-    }
-
-    public void AddBubble(Bubble currentBubble)
-    {
-        bubblesInScene.Add(currentBubble);
-        currentBubble.transform.SetParent(tilemap.transform);
     }
 
     private void CheckBubbleSequence(Bubble bubble)
@@ -104,10 +100,6 @@ public class GameManager : Singleton<GameManager>
         }
     }
 
-    public Tilemap GetTilemmap()
-    {
-        return tilemap;
-    }
     private void DropDisconectedBubbles()
     {
         SetAllBubblesConnectionToFalse();
@@ -121,36 +113,6 @@ public class GameManager : Singleton<GameManager>
         {
             bubble.IsConnected = false;
         }
-    }
-
-    public Vector3 GetHighestBubblePos()
-    {
-        var lastBubbleIndexVert = tilemap.WorldToCell(bubblesInScene[0].transform.position);
-        Vector3Int maxBubbleIndexVert;
-
-        for (int i = 0; i < bubblesInScene.Count; i++)
-        {
-            var bubble = bubblesInScene[i];
-            maxBubbleIndexVert = tilemap.WorldToCell(bubble.transform.position);
-            if (maxBubbleIndexVert.y > lastBubbleIndexVert.y) lastBubbleIndexVert = maxBubbleIndexVert;
-        }
-
-        return tilemap.CellToWorld(lastBubbleIndexVert);
-    }
-
-    public Vector3 GetLowestBubblePos()
-    {
-        var lastBubbleIndexVert = tilemap.WorldToCell(bubblesInScene[0].transform.position);
-        Vector3Int maxBubbleIndexVert;
-
-        for (int i = 0; i < bubblesInScene.Count; i++)
-        {
-            var bubble = bubblesInScene[i];
-            maxBubbleIndexVert = tilemap.WorldToCell(bubble.transform.position);
-            if (maxBubbleIndexVert.y < lastBubbleIndexVert.y) lastBubbleIndexVert = maxBubbleIndexVert;
-        }
-
-        return tilemap.CellToWorld(lastBubbleIndexVert);
     }
 
     private void SetConnectedBubblesToTrue()
@@ -226,6 +188,40 @@ public class GameManager : Singleton<GameManager>
             RemoveBubble(bubble);
         }
     }
+    #endregion
+
+
+    public Vector3 GetHighestBubblePos()
+    {
+        var lastBubbleIndexVert = tilemap.WorldToCell(bubblesInScene[0].transform.position);
+        Vector3Int maxBubbleIndexVert;
+
+        for (int i = 0; i < bubblesInScene.Count; i++)
+        {
+            var bubble = bubblesInScene[i];
+            maxBubbleIndexVert = tilemap.WorldToCell(bubble.transform.position);
+            if (maxBubbleIndexVert.y > lastBubbleIndexVert.y) lastBubbleIndexVert = maxBubbleIndexVert;
+        }
+
+        return tilemap.CellToWorld(lastBubbleIndexVert);
+    }
+
+    public Vector3 GetLowestBubblePos()
+    {
+        var lastBubbleIndexVert = tilemap.WorldToCell(bubblesInScene[0].transform.position);
+        Vector3Int maxBubbleIndexVert;
+
+        for (int i = 0; i < bubblesInScene.Count; i++)
+        {
+            var bubble = bubblesInScene[i];
+            maxBubbleIndexVert = tilemap.WorldToCell(bubble.transform.position);
+            if (maxBubbleIndexVert.y < lastBubbleIndexVert.y) lastBubbleIndexVert = maxBubbleIndexVert;
+        }
+
+        return tilemap.CellToWorld(lastBubbleIndexVert);
+    }
+
+
 
     public void RemoveBubble(Bubble bubble)
     {
@@ -236,8 +232,7 @@ public class GameManager : Singleton<GameManager>
         }
         if (bubblesInScene.Count <= 0)
         {
-            //OnGameEnd();
-            Debug.Log("end");
+            OnEndGame();
         }
     }
 
@@ -262,17 +257,72 @@ public class GameManager : Singleton<GameManager>
         AddBubble(bubble);
     }
 
+    //public Vector3 GetTargetPos(Bubble bubble, Bubble moveBubble)
+    //{
+    //    List<Vector3> listNearPos = new();
+    //    Vector3 setBubblePos  = bubble.transform.position;
+    //    Vector3 nearPos;
+    //    Vector3Int cellPosition = tilemap.WorldToCell(setBubblePos);
+    //    Vector3Int cellPos;
+    //    for (int i = -1; i < 2; i++)
+    //    {
+    //        for (int j = -1; j < 2; j++)
+    //        {
+    //            cellPos = cellPosition + new Vector3Int(i, j, 0);
+    //            nearPos = tilemap.CellToWorld(cellPos);
+    //            var hits = Physics2D.OverlapCircle(nearPos, _neighborDetectionRange / 4);
+    //            if (hits != null && hits.gameObject != moveBubble.gameObject)
+    //            {
+    //                Debug.Log("near" + gameObject);
+    //                break;
+    //            }
+    //            listNearPos.Add(tilemap.GetCellCenterWorld(cellPos));
+    //        }
+    //    }
+
+    //    if (listNearPos.Count <= 0)
+    //    {
+    //        Debug.Log("< 0");
+    //        return Vector3.zero;
+    //    }
+    //    else
+    //    {
+    //        Debug.Log(listNearPos.Count);
+    //    }
+
+    //    var Pos = listNearPos[0];
+    //    var lastDistance = Vector2.Distance(moveBubble.transform.position, listNearPos[0]);
+
+    //    for (int i = 1; i< listNearPos.Count; i++)
+    //    {
+    //        var tempDis = Vector2.Distance(moveBubble.transform.position, listNearPos[i]);
+    //        if(tempDis < lastDistance)
+    //        {
+    //            lastDistance = tempDis;
+    //            Pos = listNearPos[i];
+    //        }
+    //    }
+
+    //    return Pos;
+    //}
+
+    public void GetTargetTransform(Vector3 point)
+    {
+
+    }
+
     private IEnumerator ProcessBubbles()
     {
         yield return new WaitForEndOfFrame();
         //bubbleSequence.Clear();
+
         UpdateScene();
-        if (BubblesLeft <= 0) Debug.Log("end");
-        shooter.OnBubbleCollided();
+
     }
 
     public void UpdateScene()
     {
+        if (BubblesLeft <= 0) return;
         List<BubbleColor> colors = new List<BubbleColor>();
 
         foreach (Bubble bubble in bubblesInScene)
@@ -285,17 +335,22 @@ public class GameManager : Singleton<GameManager>
         }
         colorsInScene = colors;
 
+        MoveCamera();
+    }
+
+    public void MoveCamera()
+    {
+        cameraController.StartMoveCamera(highestPos, GetLowestBubblePos(), cellSize.y, OnEndStartMoveCamera);
     }
 
     public void OnEndGame()
     {
-        // end game
+        IsEndGame = true;
     }
 
     public void OnEndStartMoveCamera()
     {
-        shooter.SpawnBubble();
-        IsCanPlay = true;
+        shooter.OnBubbleCollided();
     }
 
 }
