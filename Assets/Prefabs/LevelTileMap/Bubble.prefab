@@ -98,11 +98,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e632ab66db984746a8fc27cc8927a05, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: 0
-  color: 0
   spriteRenderer: {fileID: 3643958251048011150}
   rb: {fileID: 0}
+  timeMovePerDistance: 0.05
   circleCollider: {fileID: 8236780225179307232}
+  color: 0
+  type: 0
 --- !u!58 &8236780225179307232
 CircleCollider2D:
   m_ObjectHideFlags: 0

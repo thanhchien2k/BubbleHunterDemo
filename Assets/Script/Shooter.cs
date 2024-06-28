@@ -10,15 +10,26 @@ public class Shooter : Singleton<Shooter>
     [SerializeField] private LineController lineController;
     [SerializeField] private Transform shootTransform;
     [SerializeField] private Transform nextTransform;
+    [SerializeField] private Transform mesh;
     [SerializeField] private float _allowedShotAngle = 50f;
     [SerializeField] private float _shootingForce = 20f;
 
-    private float _lookAngle;
-    private Vector2 curHitPoint;
     private Bubble curBubble;
     private Bubble nextBubble;
-    private bool ableShoot = true;
+    private bool ableShoot = true; 
+    private List<Vector3> shootPos;
+    private Vector3 shooterLocalScale;
+    private Vector3 nextLocalScale;
+    private int ReflectCount;
 
+    public bool IsChange { get; set; } = false;
+    
+    private void Start()
+    {
+        shooterLocalScale = shootTransform.localPosition;
+        nextLocalScale = nextTransform.localPosition;  
+        shootPos = new List<Vector3>();
+    }
     private void Update()
     {
         ProcessInput();
@@ -26,7 +37,7 @@ public class Shooter : Singleton<Shooter>
 
     private void ProcessInput()
     {
-        if(CameraController.Instance._cameraIsMoving || GameManager.Instance.IsEndGame) return;
+        if(CameraController.Instance.CameraIsMoving || GameManager.Instance.IsEndGame || IsChange) return;
 
         if (Input.GetMouseButtonDown(0) && !EventSystem.current.IsPointerOverGameObject() && ableShoot)
         {
@@ -38,34 +49,52 @@ public class Shooter : Singleton<Shooter>
         {
             var lookDirection = Camera.main.ScreenToWorldPoint(Input.mousePosition) - transform.position;
             var lookAngle = Mathf.Atan2(lookDirection.y, lookDirection.x) * Mathf.Rad2Deg;
-            this._lookAngle = lookAngle;
 
             if (Mathf.Abs(lookAngle - 90) > _allowedShotAngle)
             {
                 lineController.gameObject.SetActive(false);
             }
 
-            var hit = Physics2D.Raycast(shootTransform.position, lookDirection);
+            int layerMask = LayerMask.GetMask("Mesh");
 
-            if (hit.collider != null)
+            layerMask = ~layerMask;
+
+            shootPos.Clear();
+            ReflectCount = 0;
+            bool LoockActive = true;
+            var curHitPoint = shootTransform.position;
+            lineController.UpdatePoint(0, curHitPoint);
+            shootPos.Add(curHitPoint);
+
+            while (LoockActive)
             {
-                //if (curHitPoint == hit.point) return;
+                var hit = Physics2D.Raycast(curHitPoint, lookDirection, Mathf.Infinity, layerMask);
 
-                curHitPoint = hit.point;
-                lineController.UpdatePoint(1, hit.point);
-
-                if (hit.collider.CompareTag("Wall"))
+                if (hit && hit.collider.CompareTag("Wall"))
                 {
-                    Vector2 direct = Vector2.Reflect(lookDirection, hit.normal);
-                    Vector2 pos = direct.normalized / 10 + curHitPoint;
-                    hit = Physics2D.Raycast(pos, direct);
+                    lookDirection = Vector3.Reflect(lookDirection, hit.normal);
+                    curHitPoint = (Vector2)lookDirection.normalized / 10 + hit.point;
 
-                    lineController.UpdatePoint(2, hit.point);
+                    if(ReflectCount < 3)
+                    {
+                        ReflectCount++;
+                        lineController.UpdatePoint(ReflectCount, hit.point);
+                    }
+                    shootPos.Add(hit.point);
                 }
+                else if(hit && (hit.collider.CompareTag("Bubble") || hit.collider.CompareTag("Roof")))
+                {
+                    if(ReflectCount < 3)
+                    {
+                        ReflectCount++;
+                        lineController.UpdatePoint(ReflectCount, hit.point);
+                    }
+                    shootPos.Add(hit.point);
+                    LoockActive = false;
+                }
+
             }
         }
-
-
 
         if (Input.GetMouseButtonUp(0) && curBubble != null && lineController.gameObject.activeSelf)
         {
@@ -76,15 +105,13 @@ public class Shooter : Singleton<Shooter>
                 Shoot();
                 curBubble = null;
             }
-
         }
     }
 
     private void Shoot()
     {
         ableShoot = false;
-        curBubble.ShootBubble(_shootingForce, _lookAngle);
-        _lookAngle = 90f;
+        curBubble.StratMoveToTarget(shootPos);
     }
 
     public void OnBubbleCollided()
@@ -97,7 +124,6 @@ public class Shooter : Singleton<Shooter>
             return;
         }
 
-        ableShoot = true;  
 
         if (GameManager.Instance.ShotsLeft == 0)
         {
@@ -108,14 +134,16 @@ public class Shooter : Singleton<Shooter>
         if (GameManager.Instance.ShotsLeft > 0 && GameManager.Instance.BubblesLeft > 0)
         {
             curBubble = nextBubble;
-            curBubble.transform.SetParent(shootTransform);
+            curBubble.transform.SetParent(mesh);
             MoveToTarget(curBubble.transform, shootTransform.position, 0.2f, ()=>
             {
                 if (GameManager.Instance.ShotsLeft > 1 && GameManager.Instance.BubblesLeft > 0)
                 {
                     CheckCurrentBubbleColor();
                     SpawnBubble();
+                    ableShoot = true;
                     GameManager.Instance.IsCanPlay = true;
+
                 }
             });
 
@@ -131,18 +159,23 @@ public class Shooter : Singleton<Shooter>
         if(nextBubble == null)
         {
             nextBubble = CreateNewBubble(colors);
+            if (!colors.Contains(nextBubble.color) && colors.Count > 0)
+            {
+                Destroy(nextBubble);
+                SpawnBubble();
+            }
         }
 
         if(curBubble == null)
         {
             curBubble = nextBubble;
-            curBubble.transform.SetParent(shootTransform);
+            curBubble.transform.SetParent(mesh);
             curBubble.transform.position = shootTransform.position;
 
             nextBubble = CreateNewBubble(colors);
         }
 
-        nextBubble.transform.SetParent(nextTransform);
+        nextBubble.transform.SetParent(mesh);
         nextBubble.transform.position = nextTransform.position;
     }
 
@@ -151,7 +184,6 @@ public class Shooter : Singleton<Shooter>
         Bubble bubble = Instantiate(GameConfig.Bubble);
         bubble.SetupBubble(GetBubbleInfo(colors[Random.Range(0, colors.Count)], BubbleType.Normal));
         bubble.circleCollider.enabled = false;
-        Debug.Log(bubble.color);
         return bubble;
     }
 
@@ -174,7 +206,16 @@ public class Shooter : Singleton<Shooter>
             Destroy(curBubble.gameObject);
             curBubble = CreateNewBubble(colors);
             curBubble.transform.position = shootTransform.position;
-            curBubble.transform.SetParent(shootTransform);
+            curBubble.transform.SetParent(mesh);
         }
+    }
+
+    public void ChangeBubble(float time)
+    {
+        Bubble temp = nextBubble;
+        nextBubble = curBubble;
+        curBubble = temp;
+        curBubble.transform.DOLocalMove(shooterLocalScale , time).SetEase(Ease.Linear);
+        nextBubble.transform.DOLocalMove(nextLocalScale , time).SetEase(Ease.Linear).OnComplete(()=> IsChange = false);
     }
 }

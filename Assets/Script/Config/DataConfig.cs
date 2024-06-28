@@ -50,6 +50,8 @@ public class TilemapData
     public List<TileInfo> Tiles = new();
 }
 
+[Serializable]
+
 public class TileInfo
 {
     public TileBase TileBase;
@@ -67,4 +69,20 @@ public class TileInfo
         this.TileBase = tile;
         this.Position = position;
     }
+
+}
+
+[Serializable]
+public struct LevelInfo
+{
+    public LevelType LevelType;
+    public int Point;
+    public int GemCount;
+}
+
+[SerializeField]
+public enum LevelType
+{
+    Popup,
+    CollectGem,
 }

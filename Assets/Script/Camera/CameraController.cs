@@ -1,6 +1,5 @@
 using DG.Tweening;
 using System;
-using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class CameraController : Singleton<CameraController>
@@ -8,23 +7,22 @@ public class CameraController : Singleton<CameraController>
     [SerializeField] private EdgeCollider2D edgeCollider;
     [SerializeField] private BoxCollider2D roofCollider;
     [SerializeField] private Camera mainCamera;
-    [SerializeField] private float cameraTransitionTime = 0.15f;
+    [SerializeField] private float cameraTransitionTime = 0.1f;
     [SerializeField] int rowMoveCamera = 3;
-    [SerializeField] int rowFixCamera = 14;
+    [SerializeField] int rowFixCamera = 7;
 
-    public  bool _cameraIsMoving { get; set; }
+    Vector3 lowestPos;
+    int minBubbleHeightIndex;
+    Vector2 _edgeLeftBottom, _edgeRightBottom;
+
+    public  bool CameraIsMoving { get; set; }
     public bool IsStart { get; set; } = true;
     public bool IsFixed { get; set; } = false;
 
-
-    Vector3 lowestPos;
-    int _minBubbleHeightIndex;
-
-    Vector2 _edgeLeftBottom, _edgeRightBottom;
     void Start()
     {
         FitCollider();
-        _cameraIsMoving = false;
+        CameraIsMoving = false;
     }
 
     void FitCollider()
@@ -43,7 +41,7 @@ public class CameraController : Singleton<CameraController>
 
         edgeCollider.points = points;
         roofCollider.size = new Vector2(topRight.x - topLeft.x, 0.1f); ;
-        roofCollider.offset = new Vector2(0 , GameManager.Instance.GetHighestBubblePos().y);
+        roofCollider.offset = new Vector2(0 , GameManager.Instance.GetHighestBubblePos().y + GameManager.Instance.CellSize.y / 2);
     }
 
     public void StartMoveCamera(Vector3 heigest,Vector3 lowest, float ySize,Action action)
@@ -51,7 +49,7 @@ public class CameraController : Singleton<CameraController>
         if(lowestPos == lowest)
         {
             action.Invoke();
-            _cameraIsMoving = false;
+            CameraIsMoving = false;
             return;
         }
 
@@ -67,18 +65,17 @@ public class CameraController : Singleton<CameraController>
 
             if (distance < 0)
             {
-                Debug.Log("fix");
-                targetPos.y = 0f;
+                targetPos.y = GamePlayCanvasControl.Instance.headerDis;
             }
 
         }
 
-        _cameraIsMoving = true;
+        CameraIsMoving = true;
         float time = (Mathf.Abs(targetPos.y - mainCamera.transform.position.y)) * cameraTransitionTime / ySize ;
         mainCamera.transform.DOMove(targetPos, time).SetEase(Ease.Linear).OnComplete(() =>
         {
             action.Invoke();
-            _cameraIsMoving = false;
+            CameraIsMoving = false;
         });
         
     }

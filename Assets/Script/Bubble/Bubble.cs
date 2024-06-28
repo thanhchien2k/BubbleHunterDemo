@@ -1,17 +1,18 @@
 
+using DG.Tweening;
 using System.Collections;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using UnityEngine;
-using UnityEngine.Tilemaps;
-
+using Random = UnityEngine.Random;
 public class Bubble : MonoBehaviour
 {
-    [SerializeField] BubbleType type;
-    public BubbleColor color;
     [SerializeField] SpriteRenderer spriteRenderer;
     [SerializeField] Rigidbody2D rb;
+    [SerializeField] float timeMovePerDistance = 0.05f;
     public CircleCollider2D circleCollider;
+
+    public BubbleColor color;
+    public BubbleType type;
 
     public bool IsConnected { get; set; }
     public bool IsFixed { get; set; }
@@ -25,34 +26,33 @@ public class Bubble : MonoBehaviour
 
     }
 
-    public void ShootBubble(float shootingForce, float angles)
-    {
-        IsFixed = false;
-        circleCollider.enabled = true;
-        rb = gameObject.AddComponent<Rigidbody2D>();
-        rb.gravityScale = 0f;
-        rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
-        this.transform.rotation = Quaternion.Euler(0f, 0f, angles - 90f);
-        rb.AddForce(this.transform.up * shootingForce, ForceMode2D.Impulse);
-    }
+    //public void ShootBubble(float shootingForce, float angles)
+    //{
+    //    IsFixed = false;
+    //    circleCollider.enabled = true;
+    //    rb = gameObject.AddComponent<Rigidbody2D>();
+    //    rb.gravityScale = 0f;
+    //    rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+    //    this.transform.rotation = Quaternion.Euler(0f, 0f, angles - 90f);
+    //    rb.AddForce(this.transform.up * shootingForce, ForceMode2D.Impulse);
+    //}
 
 
-    private void OnCollisionEnter2D(Collision2D collision)
-    {
-        if (collision.gameObject.CompareTag("Bubble") && rb != null )
-        {
+    //private void OnCollisionEnter2D(Collision2D collision)
+    //{
+    //    if (collision.gameObject.CompareTag("Bubble") && rb != null )
+    //    {
 
-            if(collision.transform.GetComponent<Bubble>().IsFixed && !IsFixed)
-            {
-               //transform.position = GetTargetPos(collision.transform.GetComponent<Bubble>(), this);
-                ConnectToMap(this);
-            }
-        }
-        else if (collision.gameObject.CompareTag("Roof"))
-        {
-            ConnectToMap(this);
-        }
-    }
+    //        if(collision.transform.GetComponent<Bubble>().IsFixed && !IsFixed)
+    //        {
+    //            ConnectToMap();
+    //        }
+    //    }
+    //    else if (collision.gameObject.CompareTag("Roof"))
+    //    {
+    //        ConnectToMap();
+    //    }
+    //}
 
     //public Vector3 GetTargetPos(Bubble bubble, Bubble move)
     //{
@@ -61,20 +61,18 @@ public class Bubble : MonoBehaviour
     //    return GameManager.Instance.GetTargetPos(bubble, move);
     //}
 
-    public void ConnectToMap(Bubble bubble)
+    public void ConnectToMap()
     {
-        rb.velocity = Vector2.zero;
-        Destroy(rb);
-        rb = null;
         IsFixed = true;
-        GameManager.Instance.SnapToNearestGripPosition(bubble);
-        GameManager.Instance.ProcessTurn(bubble);
+        circleCollider.enabled = true;
+        GameManager.Instance.SnapToNearestGripPosition(this);
+        GameManager.Instance.ProcessTurn(this);
     }
 
     public List<Bubble> GetNeighbors()
     {
         List<Bubble> neighbors = new List<Bubble>();
-        var hits = Physics2D.OverlapCircleAll(transform.position, GameManager.Instance._neighborDetectionRange);
+        var hits = Physics2D.OverlapCircleAll(transform.position, GameManager.Instance.NeighborDetectionRange);
 
         foreach (var hit in hits)
         {
@@ -92,12 +90,10 @@ public class Bubble : MonoBehaviour
     {
         if (rb != null) Debug.Log("rb != null");
         circleCollider.enabled = false;
-
-        if (this.type == BubbleType.Gem)
+        if (type == BubbleType.Gem)
         {
-
+            GamePlayCanvasControl.Instance.GemCount++;
         }
-
         Destroy(gameObject);
     }
 
@@ -112,17 +108,83 @@ public class Bubble : MonoBehaviour
     {
         if(rb != null) return;
         rb = gameObject.AddComponent<Rigidbody2D>();
+        RandomForce();
+    }
 
+    public void RandomForce()
+    {
+        float randomX = Random.Range(-2f, 2f);
+        float randomY = Random.Range(-3f, -1f);
+
+        Vector2 force = new Vector2(randomX, randomY);
+        rb.AddForce(force, ForceMode2D.Impulse);
     }
 
     public void DestroyFallingBubble()
     {
-        if(this.type == BubbleType.Gem)
+        if (type == BubbleType.Gem)
         {
-
+            GamePlayCanvasControl.Instance.GemCount++;
         }
 
         StartCoroutine(DelayDestroy());
+    }
+
+    public void StratMoveToTarget(List<Vector3> targets)
+    {
+        int count = targets.Count;
+        Vector3 endPoint;
+        endPoint = FindPointOnLine(targets[count - 1], targets[count - 2]);
+        targets[count - 1] = endPoint;
+
+        for(int i = 1; i< targets.Count - 1; i++)
+        {
+
+            Vector3 fixTarget = targets[i];
+            if (fixTarget.x > 0)
+            {
+                fixTarget.x -= GameManager.Instance.CellSize.x / 2;
+            }
+            else
+            {
+                fixTarget.x += GameManager.Instance.CellSize.x / 2;
+            }
+
+            targets[i] = fixTarget;
+        }
+
+        Vector3[] fixtargets = targets.ToArray();
+        MoveToTarget(fixtargets);
+    }
+
+    Vector3 FindPointOnLine(Vector3 a, Vector3 b)
+    {
+        float distance = GameManager.Instance.CellSize.x/2;
+        Vector3 AB = b - a;
+
+        float AB_length = AB.magnitude;
+
+        Vector3 AB_unit = AB / AB_length;
+
+        Vector3 AP = distance * AB_unit;
+
+        Vector3 P = a + AP;
+        return P;
+    }
+
+    public void MoveToTarget(Vector3[] targets)
+    {
+        float time = 0;
+
+        for (int i = 1;i< targets.Length;i++)
+        {
+          time += Vector3.Distance(targets[i], targets[i-1]) * timeMovePerDistance;
+        }
+
+        transform.DOPath(targets, time).SetEase(Ease.Linear).OnComplete(() =>
+        {
+            ConnectToMap();
+        });
     }
 
     IEnumerator DelayDestroy()
@@ -189,6 +251,5 @@ public class Bubble : MonoBehaviour
         transform.localPosition = startPos;
         animStarted = false;
     }
-
 
 }
