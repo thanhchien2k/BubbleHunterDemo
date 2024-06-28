@@ -13,9 +13,13 @@ MonoBehaviour:
   m_Name: LevelConfig
   m_EditorClassIdentifier: 
   levelInfos:
-  - LevelType: 0
+  - Tilemap: {fileID: 1392854505985824564, guid: 843de1f74b1c92a4a898470bb02fb90e, type: 3}
+    LevelType: 0
     Point: 0
     GemCount: 5
-  - LevelType: 1
+    shootCount: 20
+  - Tilemap: {fileID: 467925949046327804, guid: 9d7820686939bbe4c92c2908dbfa550a, type: 3}
+    LevelType: 1
     Point: 0
     GemCount: 5
+    shootCount: 25

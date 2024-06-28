@@ -6,13 +6,17 @@ using UnityEngine;
 using Random = UnityEngine.Random;
 public class Bubble : MonoBehaviour
 {
-    [SerializeField] SpriteRenderer spriteRenderer;
-    [SerializeField] Rigidbody2D rb;
-    [SerializeField] float timeMovePerDistance = 0.05f;
-    public CircleCollider2D circleCollider;
-
+    //
     public BubbleColor color;
     public BubbleType type;
+
+    [SerializeField] SpriteRenderer spriteRenderer;
+    [SerializeField] float timeMovePerDistance = 0.05f;
+
+    Rigidbody2D rb;
+
+    public CircleCollider2D circleCollider;
+
 
     public bool IsConnected { get; set; }
     public bool IsFixed { get; set; }
@@ -120,13 +124,20 @@ public class Bubble : MonoBehaviour
         rb.AddForce(force, ForceMode2D.Impulse);
     }
 
-    public void DestroyFallingBubble()
+    public void CheckFallingBubble()
     {
-        if (type == BubbleType.Gem)
+        circleCollider.enabled = false;
+
+        if (type == BubbleType.Spark)
+        {
+            return;
+        }
+        else if (type == BubbleType.Gem)
         {
             GamePlayCanvasControl.Instance.GemCount++;
         }
 
+        SetUpRigibody();
         StartCoroutine(DelayDestroy());
     }
 
@@ -201,7 +212,6 @@ public class Bubble : MonoBehaviour
     private IEnumerator PlayHitAnimCor(Vector3 newBallPos, float force)
     {
         animStarted = true;
-        //if (tag == "chicken") yield break;
         yield return new WaitForFixedUpdate();
         if (rb != null) yield break;
         float dist = Vector3.Distance(transform.position, newBallPos);
@@ -224,12 +234,14 @@ public class Bubble : MonoBehaviour
         {
             distCovered = (Time.time - startTime) * speed;
             if (this == null) yield break;
+
             //   if( destroyed ) yield break;
             //if (falling)
             //{
             //    //           transform.localPosition = startPos;
             //    yield break;
             //}
+
             transform.localPosition = Vector3.Lerp(startPos, newBallPos, distCovered);
             yield return new WaitForEndOfFrame();
         }
@@ -240,11 +252,13 @@ public class Bubble : MonoBehaviour
         {
             distCovered = (Time.time - startTime) * speed;
             if (this == null) yield break;
+
             //if (falling)
             //{
             //    //      transform.localPosition = startPos;
             //    yield break;
             //}
+
             transform.localPosition = Vector3.Lerp(lastPos, startPos, distCovered);
             yield return new WaitForEndOfFrame();
         }

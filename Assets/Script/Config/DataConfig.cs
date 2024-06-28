@@ -75,9 +75,11 @@ public class TileInfo
 [Serializable]
 public struct LevelInfo
 {
+    public Tilemap Tilemap;
     public LevelType LevelType;
     public int Point;
     public int GemCount;
+    public int shootCount;
 }
 
 [SerializeField]

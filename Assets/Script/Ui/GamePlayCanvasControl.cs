@@ -8,7 +8,10 @@ public class GamePlayCanvasControl : Singleton<GamePlayCanvasControl>
     [SerializeField] WinPopup winPopup;
     [SerializeField] TextMeshProUGUI gemText;
     [SerializeField] Image header;
+
     private int gemCount;
+    LevelInfo levelInfo;
+
     public float headerDis;
     public int GemCount { 
 
@@ -21,11 +24,10 @@ public class GamePlayCanvasControl : Singleton<GamePlayCanvasControl>
         }
     }
     private int curentLevelID;
-    private LevelInfo levelInfo;
     private void Start()
     {
-        curentLevelID = PlayerPrefs.GetInt("LevelID", 0);
-        levelInfo = LevelConfig.LevelInfos[curentLevelID];
+        levelInfo = GameManager.Instance.levelInfo;
+
         if (levelInfo.LevelType != LevelType.CollectGem) gemText.gameObject.SetActive(false);
         else
         {
@@ -67,4 +69,5 @@ public class GamePlayCanvasControl : Singleton<GamePlayCanvasControl>
         float heightInWorldSpace = topPos.y - bottomPos.y;
         return heightInWorldSpace;
     }
+
 }

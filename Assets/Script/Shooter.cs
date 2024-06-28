@@ -11,8 +11,7 @@ public class Shooter : Singleton<Shooter>
     [SerializeField] private Transform shootTransform;
     [SerializeField] private Transform nextTransform;
     [SerializeField] private Transform mesh;
-    [SerializeField] private float _allowedShotAngle = 50f;
-    [SerializeField] private float _shootingForce = 20f;
+    [SerializeField] private float allowedShotAngle = 50f;
 
     private Bubble curBubble;
     private Bubble nextBubble;
@@ -21,14 +20,16 @@ public class Shooter : Singleton<Shooter>
     private Vector3 shooterLocalScale;
     private Vector3 nextLocalScale;
     private int ReflectCount;
-
+    private LevelInfo levelInfo;
     public bool IsChange { get; set; } = false;
     
     private void Start()
     {
+        levelInfo = GameManager.Instance.levelInfo;
         shooterLocalScale = shootTransform.localPosition;
         nextLocalScale = nextTransform.localPosition;  
         shootPos = new List<Vector3>();
+        mesh.gameObject.SetActive(false);
     }
     private void Update()
     {
@@ -50,7 +51,7 @@ public class Shooter : Singleton<Shooter>
             var lookDirection = Camera.main.ScreenToWorldPoint(Input.mousePosition) - transform.position;
             var lookAngle = Mathf.Atan2(lookDirection.y, lookDirection.x) * Mathf.Rad2Deg;
 
-            if (Mathf.Abs(lookAngle - 90) > _allowedShotAngle)
+            if (Mathf.Abs(lookAngle - 90) > allowedShotAngle)
             {
                 lineController.gameObject.SetActive(false);
             }
@@ -92,6 +93,11 @@ public class Shooter : Singleton<Shooter>
                     shootPos.Add(hit.point);
                     LoockActive = false;
                 }
+                else if (!hit)
+                {
+                    shootPos.Clear();
+                    LoockActive = false;
+                }
 
             }
         }
@@ -99,7 +105,8 @@ public class Shooter : Singleton<Shooter>
         if (Input.GetMouseButtonUp(0) && curBubble != null && lineController.gameObject.activeSelf)
         {
             lineController.gameObject.SetActive(false);
-            if (GameManager.Instance.IsCanPlay)
+
+            if (GameManager.Instance.IsCanPlay && shootPos.Count > 1)
             {
                 GameManager.Instance.IsCanPlay = false;
                 Shoot();
@@ -116,6 +123,10 @@ public class Shooter : Singleton<Shooter>
 
     public void OnBubbleCollided()
     {
+        if (!mesh.gameObject.activeSelf)
+        {
+            mesh.gameObject.SetActive(true);
+        }
 
         if (nextBubble == null)
         {
@@ -141,6 +152,7 @@ public class Shooter : Singleton<Shooter>
                 {
                     CheckCurrentBubbleColor();
                     SpawnBubble();
+                    GameManager.Instance.ShotsLeft--;
                     ableShoot = true;
                     GameManager.Instance.IsCanPlay = true;
 

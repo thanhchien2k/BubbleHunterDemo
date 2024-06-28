@@ -10,13 +10,23 @@ public class GameManager : Singleton<GameManager>
 
     private Tilemap tilemap;
     private int minSequenceSize = 3;
+    private int shotsLeft;
     private Vector3 highestPos;
     private Vector3 newPos;
     private List<Bubble> bubblesInScene;
     private List<Bubble> bubbleSequence;
     private List<Bubble> bubbleAnim;
+    int levelID;
 
-    public int ShotsLeft { get; private set; } = 20;
+    public LevelInfo levelInfo { get; private set; }
+    public int ShotsLeft { 
+        get { return shotsLeft; }
+        
+        set 
+        { 
+            shotsLeft = value;
+        }
+    }
     public int BubblesLeft { get { return bubblesInScene.Count; } }
     public float NeighborDetectionRange { get; private set; } 
     public List<BubbleColor> colorsInScene { get; private set; }
@@ -27,15 +37,23 @@ public class GameManager : Singleton<GameManager>
     protected override void Awake()
     {
         base.Awake();
-        int levelID = PlayerPrefs.GetInt("LevelID", 0);
         bubbleSequence = new List<Bubble>();
         bubbleAnim = new List<Bubble>();
         bubblesInScene = new List<Bubble>();
-        tilemap = Instantiate(GameConfig.LevelMap[levelID], grid);
+        levelID = PlayerPrefs.GetInt("LevelID", 0);
+        levelInfo = LevelConfig.LevelInfos[levelID];
+
+        tilemap = Instantiate(levelInfo.Tilemap, grid);
+        ShotsLeft = levelInfo.shootCount;
         NeighborDetectionRange = GameConfig.Bubble.circleCollider.radius * 1.5f;
         CellSize = tilemap.cellSize;
         AddBubleToList();
+    }
+
+    private void Start()
+    {
         UpdateScene();
+        AdjustTilemap();
     }
 
     public void AddBubleToList()
@@ -173,8 +191,6 @@ public class GameManager : Singleton<GameManager>
             if (!bubble.IsConnected)
             {
                bufferToRemove.Add(bubble);
-               bubble.circleCollider.enabled = false;
-               bubble.SetUpRigibody();
             }
         }
 
@@ -222,7 +238,7 @@ public class GameManager : Singleton<GameManager>
     {
         if (bubblesInScene.Contains(bubble))
         {
-            bubble.DestroyFallingBubble();
+            bubble.CheckFallingBubble();
             bubblesInScene.Remove(bubble);
         }
     }
@@ -301,17 +317,21 @@ public class GameManager : Singleton<GameManager>
     void AdjustTilemap()
     {
 
-        float screenWidth = Camera.main.orthographicSize * 2.0f * Screen.width / Screen.height;
-        float screenHeight = Camera.main.orthographicSize * 2.0f;
+        //float screenWidth = Camera.main.orthographicSize * 2.0f * Screen.width / Screen.height;
+        //float screenHeight = Camera.main.orthographicSize * 2.0f;
 
 
-        float tileWidth = screenWidth / 11;
-        float tileHeight = screenHeight / 11;
+        //float tileWidth = screenWidth / 11;
+        //float tileHeight = screenHeight / 11;
 
- 
-        float tileSize = Mathf.Min(tileWidth, tileHeight);
 
-        tilemap.layoutGrid.cellSize = new Vector3(tileSize, tileSize, 1);
+        //float tileSize = Mathf.Min(tileWidth, tileHeight);
+
+        //tilemap.layoutGrid.cellSize = new Vector3(tileSize, tileSize, 1);
+
+        float screenWidth = CellSize.x * 11;
+        Camera.main.orthographicSize = screenWidth / ( 2f * Screen.width / Screen.height);
+
     }
 
 }
