@@ -12,7 +12,7 @@ public class LineController : MonoBehaviour
         lr = GetComponent<LineRenderer>();
     }
 
-    public void UpdatePoint(int index, Vector3 pos)
+    public void UpdatePoint(int index, Vector2 pos)
     {
         if (lr == null) return;
         lr.positionCount = index + 1;

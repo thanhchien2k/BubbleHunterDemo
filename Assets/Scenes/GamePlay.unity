@@ -906,9 +906,9 @@ LineRenderer:
       m_ColorSpace: -1
       m_NumColorKeys: 2
       m_NumAlphaKeys: 2
-    numCornerVertices: 1
+    numCornerVertices: 0
     numCapVertices: 0
-    alignment: 1
+    alignment: 0
     textureMode: 0
     textureScale: {x: 1, y: 1}
     shadowBias: 0.5
@@ -1030,7 +1030,7 @@ GameObject:
   - component: {fileID: 1915958884}
   - component: {fileID: 1915958883}
   m_Layer: 6
-  m_Name: GameObject
+  m_Name: Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1250,7 +1250,7 @@ Transform:
   m_GameObject: {fileID: 2015142460}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -3.5, z: 0}
+  m_LocalPosition: {x: 0, y: -3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1274,6 +1274,7 @@ MonoBehaviour:
   shootTransform: {fileID: 1914302111}
   nextTransform: {fileID: 1765881026}
   mesh: {fileID: 769627242}
+  shotsLeftText: {fileID: 1915958883}
   allowedShotAngle: 80
 --- !u!1001 &1514454050605299843
 PrefabInstance:

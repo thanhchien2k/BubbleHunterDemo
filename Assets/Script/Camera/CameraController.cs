@@ -1,5 +1,6 @@
 using DG.Tweening;
 using System;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class CameraController : Singleton<CameraController>
@@ -21,6 +22,7 @@ public class CameraController : Singleton<CameraController>
 
     void Start()
     {
+        AdjustTilemap();
         FitCollider();
         CameraIsMoving = false;
     }
@@ -78,6 +80,26 @@ public class CameraController : Singleton<CameraController>
             CameraIsMoving = false;
         });
         
+    }
+
+    public void AdjustTilemap()
+    {
+
+        //float screenWidth = Camera.main.orthographicSize * 2.0f * Screen.width / Screen.height;
+        //float screenHeight = Camera.main.orthographicSize * 2.0f;
+
+
+        //float tileWidth = screenWidth / 11;
+        //float tileHeight = screenHeight / 11;
+
+
+        //float tileSize = Mathf.Min(tileWidth, tileHeight);
+
+        //tilemap.layoutGrid.cellSize = new Vector3(tileSize, tileSize, 1);
+        // cung cell pos x thi pos word hang le se lon hon
+        float screenWidth =GameManager.Instance.CellSize.x * 11;
+        Camera.main.orthographicSize = screenWidth / (2f * Screen.width / Screen.height);
+
     }
 
 

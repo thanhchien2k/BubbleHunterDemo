@@ -10,7 +10,6 @@ public class GameManager : Singleton<GameManager>
 
     private Tilemap tilemap;
     private int minSequenceSize = 3;
-    private int shotsLeft;
     private Vector3 highestPos;
     private Vector3 newPos;
     private List<Bubble> bubblesInScene;
@@ -19,14 +18,7 @@ public class GameManager : Singleton<GameManager>
     int levelID;
 
     public LevelInfo levelInfo { get; private set; }
-    public int ShotsLeft { 
-        get { return shotsLeft; }
-        
-        set 
-        { 
-            shotsLeft = value;
-        }
-    }
+
     public int BubblesLeft { get { return bubblesInScene.Count; } }
     public float NeighborDetectionRange { get; private set; } 
     public List<BubbleColor> colorsInScene { get; private set; }
@@ -44,7 +36,6 @@ public class GameManager : Singleton<GameManager>
         levelInfo = LevelConfig.LevelInfos[levelID];
 
         tilemap = Instantiate(levelInfo.Tilemap, grid);
-        ShotsLeft = levelInfo.shootCount;
         NeighborDetectionRange = GameConfig.Bubble.circleCollider.radius * 1.5f;
         CellSize = tilemap.cellSize;
         AddBubleToList();
@@ -53,18 +44,26 @@ public class GameManager : Singleton<GameManager>
     private void Start()
     {
         UpdateScene();
-        AdjustTilemap();
     }
 
     public void AddBubleToList()
     {
         Bubble[] bubbles = tilemap.transform.GetComponentsInChildren<Bubble>();
-        bubblesInScene = bubbles.ToList();
+
+        bubblesInScene = bubbles.OrderBy(b => b.transform.position.y).ToList();
+
         highestPos = GetHighestBubblePos();
     }
     public void AddBubble(Bubble currentBubble)
     {
-        bubblesInScene.Add(currentBubble);
+        int index = bubblesInScene.BinarySearch(currentBubble, Comparer<Bubble>.Create((a, b) => a.transform.position.y.CompareTo(b.transform.position.y)));
+
+        if (index < 0)
+        {
+            index = ~index;
+        }
+
+        bubblesInScene.Insert(index, currentBubble);
         currentBubble.transform.SetParent(tilemap.transform);
     }
 
@@ -80,10 +79,13 @@ public class GameManager : Singleton<GameManager>
         if (bubbleSequence.Count >= minSequenceSize)
         {
             DestroyBubblesInSequence();
-            DropDisconectedBubbles();
+            //DropDisconectedBubbles();
+        }
+        else
+        {
+            StartCoroutine(ProcessBubbles());
         }
 
-        StartCoroutine(ProcessBubbles());
     }
 
     private void CheckBubbleSequence(Bubble bubble)
@@ -107,10 +109,47 @@ public class GameManager : Singleton<GameManager>
 
     private void DestroyBubblesInSequence()
     {
-        foreach (Bubble bubble in bubbleSequence)
+        //foreach (Bubble bubble in bubbleSequence)
+        //{
+        //    if (bubble.gameObject != null) RecycleBubble(bubble);
+        //}
+        ReSortBubblesSequece();
+        StartCoroutine(DestroyListBubble());
+    }
+
+    private void ReSortBubblesSequece()
+    {
+        //int count = bubbleSequence.Count;
+        //Bubble temp;
+
+        //for (int i = 0; i < count; i++)
+        //{
+        //    for (int j = i; j < count; j++)
+        //    {
+        //        if (tilemap.WorldToCell(bubbleSequence[j].transform.position).y < tilemap.WorldToCell(bubbleSequence[i].transform.position).y)
+        //        {
+        //            temp = bubbleSequence[j];
+        //            bubbleSequence[j] = bubbleSequence[i];
+        //            bubbleSequence[i] = temp;
+        //        }
+        //    }
+        //}
+        bubbleSequence = bubbleSequence.OrderBy(b => b.transform.position.y).ToList();
+    }
+
+    IEnumerator DestroyListBubble()
+    {
+        if(bubbleSequence.Count == 0)
         {
-            if (bubble.gameObject != null) RecycleBubble(bubble);
+            yield return new WaitForEndOfFrame();
+            DropDisconectedBubbles();
+            StartCoroutine(ProcessBubbles());
+            yield break;
         }
+
+        RecycleBubble(bubbleSequence.First());
+        yield return new WaitForSeconds(0.02f);
+        StartCoroutine(DestroyListBubble());
     }
 
     private void DropDisconectedBubbles()
@@ -132,7 +171,7 @@ public class GameManager : Singleton<GameManager>
     {
         bubbleSequence.Clear();
 
-        RaycastHit2D[] hits = Physics2D.RaycastAll(highestPos, Vector3.right);
+        RaycastHit2D[] hits = Physics2D.RaycastAll(highestPos, Vector3.left);
 
         for (int i = 0; i < hits.Length; i++)
         {
@@ -204,32 +243,38 @@ public class GameManager : Singleton<GameManager>
 
     public Vector3 GetHighestBubblePos()
     {
-        var lastBubbleIndexVert = tilemap.WorldToCell(bubblesInScene[0].transform.position);
-        Vector3Int maxBubbleIndexVert;
+        //var lastBubbleIndexVert = tilemap.WorldToCell(bubblesInScene[0].transform.position);
+        //Vector3Int maxBubbleIndexVert;
 
-        for (int i = 0; i < bubblesInScene.Count; i++)
-        {
-            var bubble = bubblesInScene[i];
-            maxBubbleIndexVert = tilemap.WorldToCell(bubble.transform.position);
-            if (maxBubbleIndexVert.y > lastBubbleIndexVert.y) lastBubbleIndexVert = maxBubbleIndexVert;
-        }
+        //for (int i = 0; i < bubblesInScene.Count; i++)
+        //{
+        //    var bubble = bubblesInScene[i];
+        //    maxBubbleIndexVert = tilemap.WorldToCell(bubble.transform.position);
+        //    if (maxBubbleIndexVert.y > lastBubbleIndexVert.y) lastBubbleIndexVert = maxBubbleIndexVert;
+        //}
 
-        return tilemap.CellToWorld(lastBubbleIndexVert);
+        //return tilemap.CellToWorld(lastBubbleIndexVert);
+
+        var temp = tilemap.WorldToCell(bubblesInScene.Last().transform.position);
+        return tilemap.CellToWorld(temp);
     }
 
     public Vector3 GetLowestBubblePos()
     {
-        var lastBubbleIndexVert = tilemap.WorldToCell(bubblesInScene[0].transform.position);
-        Vector3Int maxBubbleIndexVert;
+        //var lastBubbleIndexVert = tilemap.WorldToCell(bubblesInScene[0].transform.position);
+        //Vector3Int maxBubbleIndexVert;
 
-        for (int i = 0; i < bubblesInScene.Count; i++)
-        {
-            var bubble = bubblesInScene[i];
-            maxBubbleIndexVert = tilemap.WorldToCell(bubble.transform.position);
-            if (maxBubbleIndexVert.y < lastBubbleIndexVert.y) lastBubbleIndexVert = maxBubbleIndexVert;
-        }
+        //for (int i = 0; i < bubblesInScene.Count; i++)
+        //{
+        //    var bubble = bubblesInScene[i];
+        //    maxBubbleIndexVert = tilemap.WorldToCell(bubble.transform.position);
+        //    if (maxBubbleIndexVert.y < lastBubbleIndexVert.y) lastBubbleIndexVert = maxBubbleIndexVert;
+        //}
 
-        return tilemap.CellToWorld(lastBubbleIndexVert);
+        //return tilemap.CellToWorld(lastBubbleIndexVert);
+
+        var temp = tilemap.WorldToCell(bubblesInScene.First().transform.position);
+        return tilemap.CellToWorld(temp);
     }
 
 
@@ -247,9 +292,9 @@ public class GameManager : Singleton<GameManager>
     {
         if (bubbleSequence.Contains(bubble))
         {
-
-            bubblesInScene.Remove(bubble);
             bubble.OnRecycle();
+            bubbleSequence.Remove(bubble);
+            bubblesInScene.Remove(bubble);
         }
         else if (bubble.gameObject != null)
         {
@@ -260,8 +305,70 @@ public class GameManager : Singleton<GameManager>
     public void SnapToNearestGripPosition(Bubble bubble)
     {
         Vector3Int cellPosition = tilemap.WorldToCell(bubble.transform.position);
+
+        //if (Mathf.Abs(cellPosition.y % 2) == 1)
+        //{
+        //    Collider2D hit;
+
+        //    if (cellPosition.x == -6)
+        //    {
+        //        cellPosition -= new Vector3Int(-1, 0, 0);
+        //        hit = Physics2D.OverlapCircle(tilemap.GetCellCenterWorld(cellPosition), 0.1f);
+        //        if(hit != null && hit.gameObject != bubble.gameObject)
+        //        {
+        //            cellPosition -= Vector3Int.up;
+        //        }
+        //    }
+        //    else if(cellPosition.x == 5)
+        //    {
+        //        cellPosition -= new Vector3Int(1, 0, 0);
+
+        //        hit = Physics2D.OverlapCircle(tilemap.GetCellCenterWorld(cellPosition), 0.1f);
+
+        //        if (hit != null && hit.gameObject != bubble.gameObject) 
+        //        {
+        //            cellPosition -= new Vector3Int(-1, 1, 0);
+        //        }
+        //    }
+        //}
+
         bubble.transform.position = tilemap.GetCellCenterWorld(cellPosition);
+
         AddBubble(bubble);
+    }
+
+    public Vector2 FixPoint(Vector2 point)
+    {
+        Vector3Int cellPosition = tilemap.WorldToCell(point);
+
+        if (Mathf.Abs(cellPosition.y % 2) == 1)
+        {
+            Collider2D hit;
+
+            if (cellPosition.x == -6)
+            {
+                cellPosition -= new Vector3Int(-1, 0, 0);
+                hit = Physics2D.OverlapCircle(tilemap.GetCellCenterWorld(cellPosition), 0.1f);
+                if (hit != null)
+                {
+                    cellPosition -= Vector3Int.up;
+                }
+            }
+            else if (cellPosition.x == 5)
+            {
+                cellPosition -= new Vector3Int(1, 0, 0);
+
+                hit = Physics2D.OverlapCircle(tilemap.GetCellCenterWorld(cellPosition), 0.1f);
+
+                if (hit != null)
+                {
+                    cellPosition -= new Vector3Int(-1, 1, 0);
+                }
+            }
+        }
+
+        return tilemap.GetCellCenterWorld(cellPosition);
+
     }
 
     private IEnumerator ProcessBubbles()
@@ -314,24 +421,15 @@ public class GameManager : Singleton<GameManager>
         Shooter.Instance.OnBubbleCollided();
     }
 
-    void AdjustTilemap()
+    public bool IsableReflect(Vector3 pos)
     {
+        var temp = tilemap.WorldToCell(pos);
 
-        //float screenWidth = Camera.main.orthographicSize * 2.0f * Screen.width / Screen.height;
-        //float screenHeight = Camera.main.orthographicSize * 2.0f;
-
-
-        //float tileWidth = screenWidth / 11;
-        //float tileHeight = screenHeight / 11;
-
-
-        //float tileSize = Mathf.Min(tileWidth, tileHeight);
-
-        //tilemap.layoutGrid.cellSize = new Vector3(tileSize, tileSize, 1);
-
-        float screenWidth = CellSize.x * 11;
-        Camera.main.orthographicSize = screenWidth / ( 2f * Screen.width / Screen.height);
-
+        if (Mathf.Abs(temp.y % 2) == 1 && (temp.x == -6 || temp.x == 5) && tilemap.GetCellCenterWorld(temp).y >= GetLowestBubblePos().y)
+        {
+            Debug.Log(tilemap.GetCellCenterWorld(temp).y + "***" + GetLowestBubblePos().y);
+            return false;
+        }
+        return true;
     }
-
 }

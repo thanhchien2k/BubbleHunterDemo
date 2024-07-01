@@ -7,6 +7,7 @@ using Random = UnityEngine.Random;
 public class Bubble : MonoBehaviour
 {
     //
+    public bool IsFalling = false;
     public BubbleColor color;
     public BubbleType type;
 
@@ -27,7 +28,6 @@ public class Bubble : MonoBehaviour
         IsConnected = true;
         IsFixed = true;
         animStarted = false;
-
     }
 
     //public void ShootBubble(float shootingForce, float angles)
@@ -98,6 +98,7 @@ public class Bubble : MonoBehaviour
         {
             GamePlayCanvasControl.Instance.GemCount++;
         }
+        
         Destroy(gameObject);
     }
 
@@ -138,6 +139,7 @@ public class Bubble : MonoBehaviour
         }
 
         SetUpRigibody();
+        IsFalling = true;
         StartCoroutine(DelayDestroy());
     }
 
@@ -200,6 +202,7 @@ public class Bubble : MonoBehaviour
 
     IEnumerator DelayDestroy()
     {
+        Debug.Log("destroy");
         yield return new WaitForSeconds(GameConfig.BubbleLifeTime);
         Destroy(gameObject);
     }
@@ -236,11 +239,11 @@ public class Bubble : MonoBehaviour
             if (this == null) yield break;
 
             //   if( destroyed ) yield break;
-            //if (falling)
-            //{
-            //    //           transform.localPosition = startPos;
-            //    yield break;
-            //}
+            if (IsFalling)
+            {
+                transform.localPosition = startPos;
+                yield break;
+            }
 
             transform.localPosition = Vector3.Lerp(startPos, newBallPos, distCovered);
             yield return new WaitForEndOfFrame();
@@ -253,11 +256,11 @@ public class Bubble : MonoBehaviour
             distCovered = (Time.time - startTime) * speed;
             if (this == null) yield break;
 
-            //if (falling)
-            //{
-            //    //      transform.localPosition = startPos;
-            //    yield break;
-            //}
+            if (IsFalling)
+            {
+                transform.localPosition = startPos;
+                yield break;
+            }
 
             transform.localPosition = Vector3.Lerp(lastPos, startPos, distCovered);
             yield return new WaitForEndOfFrame();

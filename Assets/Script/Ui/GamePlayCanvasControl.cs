@@ -36,6 +36,7 @@ public class GamePlayCanvasControl : Singleton<GamePlayCanvasControl>
 
         headerDis = GetHeightInWorldSpace(header.rectTransform);
     }
+
     public void ActiveWinPopup()
     {
         int levelID = curentLevelID + 1;

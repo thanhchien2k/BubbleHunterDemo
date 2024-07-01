@@ -5532,7 +5532,7 @@ GameObject:
   - component: {fileID: 1392854505985824564}
   - component: {fileID: 4929248130957751873}
   m_Layer: 0
-  m_Name: Tilemap lv1(Clone)
+  m_Name: Tilemap lv1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
